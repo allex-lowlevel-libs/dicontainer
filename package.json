@@ -19,5 +19,19 @@
   "bugs": {
     "url": "https://github.com/allex-lowlevel-libs/dicontainer/issues"
   },
-  "homepage": "https://github.com/allex-lowlevel-libs/dicontainer#readme"
+  "homepage": "https://github.com/allex-lowlevel-libs/dicontainer#readme",
+  "devDependencies": {
+    "allex_inheritlowlevellib": "1.x",
+    "allex_doublelinkedlistbaselowlevellib": "1.x",
+    "allex_checkslowlevellib": "1.x",
+    "allex_destructionlowlevellib": "1.x",
+    "allex_functionmanipulationlowlevellib": "1.x",
+    "allex_eventemitterlowlevellib": "1.x",
+    "allex_fifolowlevellib": "1.x",
+    "allex_avltreelowlevellib": "1.x",
+    "allex_timeoutlowlevellib": "1.x",
+    "allex_maplowlevellib": "1.x",
+    "allex_qlowlevellib": "1.x",
+    "allex_qextlowlevellib" : "1.x"
+  }
 }

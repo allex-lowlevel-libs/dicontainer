@@ -1,28 +1,26 @@
-function createlib (SimpleDestroyable, Map, q, qext) {
+function createlib (Map, q, qext, DeferMap, containerDestroyAll) {
   'use strict';
 
   function DIContainer () {
     this._instanceMap = new Map();
-    this._deferMap = new Map ();
+    this._deferMap = new DeferMap ();
     this._listeners_map = new Map();
   }
 
-  lib.inherit (DIContainer, SimpleDestroyable);
-  DIContainer.prototype.__cleanUp = function () {
-    //TODO
+  DIContainer.prototype.destroy = function () {
+    containerDestroyAll(this._listeners_map);
+    this._listeners_map.destroy();
+    this._listeners_map = null;
+    this._instanceMap.destroy();
+    this._instanceMap = null;
+    this._deferMap.destroy();
+    this._deferMap = null;
   };
 
   DIContainer.prototype._dowait = function (modulename) {
     var instance = this._instanceMap.get(modulename);
     if (instance) return q.resolve(instance);
-
-    var d = this._deferMap.get(modulename);
-    if (!d) {
-      d = q.defer();
-      this._deferMap.add(modulename);
-    }
-
-    return d.promise;
+    return this._deferMap.promise(modulename);
   };
 
   DIContainer.prototype.waitFor = function (modulename, timeout) {
@@ -43,24 +41,12 @@ function createlib (SimpleDestroyable, Map, q, qext) {
 
   DIContainer.prototype.register = function (modulename, instance) {
     this._instanceMap.add(modulename, instance); //let add throw an error for duplicates ...
-    var defer = this._deferMap.get(modulename);
-    if (!defer) return; //nothing more to be done ...
-    this._deferMap.remove(modulename);
-    defer.resolve(instance);
+    this._deferMap.resolve(modulename, instance);
   };
 
   DIContainer.prototype.registerDestroyable = function (modulename, instance) {
-    var l = instance.destroyed.attach (this.unregister.bind(this, modulename);
-    try {
-      this.register(modulename, instance);
-    }catch(e) {
-      //if register throws an error destroy a listener and rethrow an error ...
-      l.destroy();
-      l = null;
-      throw (e);
-      return;
-    }
-    this._listeners_map.add(modulename, l);
+    this._listeners_map.add(modulename, instance.destroyed.attach (this.unregisterDestroyable.bind(this, modulename)));
+    this.register(modulename, instance);
   };
 
   DIContainer.prototype.unregister = function (modulename) {
@@ -68,10 +54,22 @@ function createlib (SimpleDestroyable, Map, q, qext) {
     this._instanceMap.remove(modulename);
   };
 
+  DIContainer.prototype.unregisterDestroyable = function (modulename) {
+    var l = this._listeners_map.remove(modulename);
+    if (l) {
+      l.destroy();
+      l = null;
+    }
+    this.unregister(modulename);
+    modulename = null;
+  };
+
   DIContainer.prototype.fail = function (modulename, reason) {
-    var d = this._deferMap.get(modulename);
-    if (!d) return;
-    d.reject (reason);
+    this._deferMap.reject(modulename, reason);
+  };
+
+  DIContainer.prototype.get = function (modulename) {
+    return this._instanceMap.get(modulename);
   };
 
   return DIContainer;
