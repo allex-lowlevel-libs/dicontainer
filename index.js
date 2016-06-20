@@ -72,6 +72,10 @@ function createlib (Map, q, qext, DeferMap, containerDestroyAll) {
     return this._instanceMap.get(modulename);
   };
 
+  DIContainer.prototype.busy = function (modulename) {
+    return !this._instanceMap.get(modulename) && !this._deferMap.exists(modulename);
+  };
+
   return DIContainer;
 }
 module.exports = createlib;
