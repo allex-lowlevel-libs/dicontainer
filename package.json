@@ -1,0 +1,23 @@
+{
+  "name": "allex_dicontainerlowlevellib",
+  "version": "1.0.0",
+  "description": "Dependency container",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -b"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allex-lowlevel-libs/dicontainer.git"
+  },
+  "keywords": [
+    "ecosystem:AllexJS",
+    "dependency"
+  ],
+  "author": "HERS development team",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/allex-lowlevel-libs/dicontainer/issues"
+  },
+  "homepage": "https://github.com/allex-lowlevel-libs/dicontainer#readme"
+}
