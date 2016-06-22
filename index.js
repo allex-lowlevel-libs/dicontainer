@@ -1,8 +1,8 @@
-function createlib (Map, q, qext, DeferMap, containerDestroyAll) {
+function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) {
   'use strict';
 
   function DIContainer () {
-    this._instanceMap = new Map();
+    this._instanceMap = new ListenableMap();
     this._deferMap = new DeferMap ();
     this._listeners_map = new Map();
   }
@@ -15,6 +15,14 @@ function createlib (Map, q, qext, DeferMap, containerDestroyAll) {
     this._instanceMap = null;
     this._deferMap.destroy();
     this._deferMap = null;
+  };
+
+  DIContainer.prototype.destroyDestroyables = function () {
+    containerDestroyAll(this._instanceMap);
+  };
+
+  DIContainer.prototype.empty = function () {
+    return this._instanceMap.count < 1;
   };
 
   DIContainer.prototype._dowait = function (modulename) {
@@ -44,14 +52,17 @@ function createlib (Map, q, qext, DeferMap, containerDestroyAll) {
     this._deferMap.resolve(modulename, instance);
   };
 
-  DIContainer.prototype.registerDestroyable = function (modulename, instance) {
-    this._listeners_map.add(modulename, instance.destroyed.attach (this.unregisterDestroyable.bind(this, modulename)));
+  DIContainer.prototype.registerDestroyable = function (modulename, instance, destroyedlistener) {
+    var mylistener = this.unregisterDestroyable.bind(this, modulename);
+    this._listeners_map.add(modulename, instance.destroyed.attach (
+      destroyedlistener ? [mylistener, destroyedlistener] : mylistener
+    ));
     this.register(modulename, instance);
   };
 
   DIContainer.prototype.unregister = function (modulename) {
     ///that's all, folks 
-    this._instanceMap.remove(modulename);
+    return this._instanceMap.remove(modulename);
   };
 
   DIContainer.prototype.unregisterDestroyable = function (modulename) {
