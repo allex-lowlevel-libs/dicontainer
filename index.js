@@ -31,6 +31,10 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
     return this._deferMap.promise(modulename);
   };
 
+  DIContainer.prototype.listenFor = function (name, cb, onlywhennotnull, singleshot) {
+    return this._instanceMap.listenFor(name, cb, onlywhennotnull, singleshot);
+  };
+
   DIContainer.prototype.waitFor = function (modulename, timeout) {
     var p = this._dowait(modulename);
     return timeout ? qext.waitForPromise(p, timeout) : p;
@@ -45,6 +49,10 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
   DIContainer.prototype.waitForMultiple = function (modulename_arr, timeout) {
     var p = this._doWaitForMultiple(modulename_arr);
     return timeout ? qext.waitForPromise(p, timeout) : p;
+  };
+
+  DIContainer.prototype.waitForMulti = function (names, cb) {
+    return this._instanceMap.waitForMulti(names, cb);
   };
 
   DIContainer.prototype.register = function (modulename, instance) {
