@@ -1,6 +1,6 @@
 {
   "name": "allex_dicontainerlowlevellib",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Dependency container",
   "main": "index.js",
   "scripts": {

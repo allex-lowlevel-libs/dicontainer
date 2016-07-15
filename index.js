@@ -95,6 +95,10 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
     return !!this._instanceMap.get(modulename) || this._deferMap.exists(modulename);
   };
 
+  DIContainer.prototype.traverse = function (cb) {
+    return this._instanceMap.traverse(cb);
+  };
+
   return DIContainer;
 }
 module.exports = createlib;
