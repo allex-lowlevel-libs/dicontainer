@@ -61,10 +61,35 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
   };
 
   DIContainer.prototype.registerDestroyable = function (modulename, instance, destroyedlistener) {
+    if (!instance.destroyed) {
+      if (destroyedlistener) {
+        destroyedlistener(instance);
+      }
+      return;
+    }
     var mylistener = this.unregisterDestroyable.bind(this, modulename);
     this._listeners_map.add(modulename, instance.destroyed.attach (
       destroyedlistener ? [mylistener, destroyedlistener] : mylistener
     ));
+    this.register(modulename, instance);
+  };
+
+  DIContainer.prototype.registerComplexDestroyable = function (modulename, instance, abouttodielistener, destroyedlistener) {
+    if (!instance.aboutToDie) {
+      abouttodielistener(instance);
+      return;
+    }
+    var mylistener = this.unregisterDestroyable.bind(this, modulename);
+    this._listeners_map.add(modulename, instance.aboutToDie.attach (
+      abouttodielistener ? [mylistener, abouttodielistener] : mylistener
+    ));
+    if (destroyedlistener) {
+      if (!instance.destroyed) {
+        destroyedlistener(instance);
+        return;
+      }
+      instance.destroyed.attach(destroyedlistener);
+    }
     this.register(modulename, instance);
   };
 
