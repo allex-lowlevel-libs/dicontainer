@@ -8,12 +8,18 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
   }
 
   DIContainer.prototype.destroy = function () {
-    containerDestroyAll(this._listeners_map);
-    this._listeners_map.destroy();
+    if (this._listeners_map) {
+      containerDestroyAll(this._listeners_map);
+      this._listeners_map.destroy();
+    }
     this._listeners_map = null;
-    this._instanceMap.destroy();
+    if (this._instanceMap) {
+      this._instanceMap.destroy();
+    }
     this._instanceMap = null;
-    this._deferMap.destroy();
+    if (this._deferMap) {
+      this._deferMap.destroy();
+    }
     this._deferMap = null;
   };
 
