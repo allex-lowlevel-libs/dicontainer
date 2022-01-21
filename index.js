@@ -5,9 +5,14 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
     this._instanceMap = new ListenableMap();
     this._deferMap = new DeferMap ();
     this._listeners_map = new Map();
+    this._creationQ = new qext.JobCollection();
   }
 
   DIContainer.prototype.destroy = function () {
+    if (this._creationQ) {
+      this._creationQ.destroy();
+    }
+    this._creationQ = null;
     if (this._listeners_map) {
       containerDestroyAll(this._listeners_map);
       this._listeners_map.destroy();
@@ -126,9 +131,101 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
     return !!this._instanceMap.get(modulename) || this._deferMap.exists(modulename);
   };
 
+  DIContainer.prototype.queueCreation = function (modulename, creationfunc) {
+    var ret, check;
+    check = this._instanceMap.get(modulename);
+    if (typeof(check) == 'undefined') {
+      ret = this.waitFor(modulename);
+      this._creationQ.run('.', new CreationJob(this, modulename, creationfunc));
+    }
+    return ret || this.waitFor(modulename);
+  };
+
   DIContainer.prototype.traverse = function (cb) {
     return this._instanceMap.traverse(cb);
   };
+
+
+  // CreationJob
+  function CreationJob (dicont, depname, creationfunc) {
+    qext.JobOnDestroyableBase.call(this, dicont, creationfunc);
+    this.dicont = dicont;
+    this.depname = depname;
+    this.creationfunc = creationfunc;
+  }
+  CreationJob.prototype = Object.create(qext.JobOnDestroyableBase.prototype,{constructor:{
+    value: CreationJob,
+    enumerable: false,
+    configurable: false,
+    writable: false
+  }});
+  CreationJob.prototype.destroy = function () {
+    this.creationfunc = null;
+    this.depname = null;
+    this.dicont = null;
+    qext.JobOnDestroyableBase.prototype.destroy.call(this);
+  };
+  CreationJob.prototype._destroyableOk = function () {
+    if (!this.destroyable) {
+      throw new Error('No DIContainer');
+    }
+    if (!this.destroyable._instanceMap) {
+      throw new Error('DIContainer destroyed');
+    }
+    return true;
+  };
+  CreationJob.prototype.go = function () {
+    var ok, check, ret;
+    ok = this.okToGo();
+    if (!ok.ok) {
+      return ok.val;
+    }
+    if (!this.dicont) {
+      this.reject(new Error('DIContainer is gone'));
+      return ok.val;
+    }
+    if (!(this.creationfunc && typeof(this.creationfunc)=='function')) {
+      this.reject(new Error('No creation function'));
+      return ok.val;
+    }
+    check = this.dicont.get(this.depname);
+    if (typeof(check) !== 'undefined') {
+      this.resolve(check);
+      return ok.val;
+    }
+    try {
+      check = this.creationfunc();
+    } catch (e) {
+      this.reject(e);
+      return ok.val;
+    }
+
+    if (!q.isThenable(check)) {
+      this.onCreationSuccess(check);
+      return ok.val;
+    }
+    check.then(
+      this.onCreationSuccess.bind(this),
+      this.onCreationSuccess.bind(this, null)
+    );
+    return ok.val;
+  };
+  CreationJob.prototype.onCreationSuccess = function (instance, creationerror) {
+    if (creationerror) {
+      console.error('Creation Error', creationerror);
+      this.reject(creationerror);
+      return;
+    }
+    if (instance && instance.destroyed && instance.destroyed.attach) {
+      this.dicont.registerDestroyable(this.depname, instance);
+    } else {
+      this.dicont.register(this.depname, instance);
+    }
+    this.resolve(true);
+  };
+
+  
+  // CreationJob end
 
   return DIContainer;
 }
