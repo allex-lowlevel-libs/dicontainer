@@ -176,11 +176,14 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
   };
   CreationJobCore.prototype.checkFetch = function (fetchedinstance) {
     if (typeof(fetchedinstance) != 'undefined') {
-      return fetchedinstance;
+      return null;
     }
     return this.creationfunc();
   };
   CreationJobCore.prototype.onFetch = function (instance) {
+    if (!instance) {
+      return;
+    }
     if (instance && instance.destroyed && instance.destroyed.attach) {
       this.dicont.registerDestroyable(this.depname, instance);
     } else {
