@@ -131,7 +131,7 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
     return !!this._instanceMap.get(modulename) || this._deferMap.exists(modulename);
   };
 
-  DIContainer.prototype.queueCreation = function (modulename, creationfunc) {
+  DIContainer.prototype.queueCreation = function (modulename, creationfunc, destructionhandlerfordestroyables) {
     var ret, check;
     check = this._instanceMap.get(modulename);
     if (typeof(check) == 'undefined') {
@@ -139,7 +139,7 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
       //this._creationQ.run('.', new CreationJob(this, modulename, creationfunc));
       this._creationQ.run(
         '.', 
-        qext.newSteppedJobOnSteppedInstance(new CreationJobCore(this, modulename, creationfunc))
+        qext.newSteppedJobOnSteppedInstance(new CreationJobCore(this, modulename, creationfunc, destructionhandlerfordestroyables))
       );
     }
     return ret || this.waitFor(modulename);
@@ -150,12 +150,14 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
   };
 
   //CreationJobCore
-  function CreationJobCore (dicont, depname, creationfunc) {
+  function CreationJobCore (dicont, depname, creationfunc, destructionhandlerfordestroyables) {
     this.dicont = dicont;
     this.depname = depname;
     this.creationfunc = creationfunc;
+    this.destructionhandlerfordestroyables = destructionhandlerfordestroyables;
   }
   CreationJobCore.prototype.destroy = function () {
+    this.destructionhandlerfordestroyables = null;
     this.creationfunc = null;
     this.depname = null;
     this.dicont = null;
@@ -185,7 +187,15 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
       return;
     }
     if (instance && instance.destroyed && instance.destroyed.attach) {
-      this.dicont.registerDestroyable(this.depname, instance);
+      this.dicont.registerDestroyable(
+        this.depname,
+        instance,
+        typeof this.destructionhandlerfordestroyables == 'function'
+        ?
+        this.destructionhandlerfordestroyables
+        :
+        null
+        );
     } else {
       this.dicont.register(this.depname, instance);
     }
