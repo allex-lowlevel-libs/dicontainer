@@ -151,6 +151,9 @@ function createlib (Map, DeferMap, ListenableMap, q, qext, containerDestroyAll) 
   DIContainer.prototype.traverseSafe = function (cb, errorcaption) {
     return this._instanceMap.traverseSafe(cb, errorcaption||'Error in DIContainer.traverseSafe');
   };
+  DIContainer.prototype.reduce = function (func, seed) {
+    return this._instanceMap.reduce(func, seed);
+  };
 
   //CreationJobCore
   function CreationJobCore (dicont, depname, creationfunc, destructionhandlerfordestroyables) {
